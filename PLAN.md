@@ -248,3 +248,91 @@ O ponto de atenção que carrego durante todo o desafio: modelos são
 particularmente propensos a produzir código que *parece* correto para a regra
 `Critical`, tratando-a como uma validação de formulário em vez de invariante de
 domínio. Por isso a fatia 003 existe isolada e vem antes da rota que a consome.
+
+---
+
+# Change Request #1 — Comentários e Timeline (14:00)
+
+Recebido às 14:00, já com o núcleo do produto pronto e verde. Registro aqui o
+impacto sobre o plano original em vez de reescrevê-lo: o enunciado (§17) diz
+querer observar **como o planejamento evolui**, e sobrescrever o plano apagaria
+justamente isso.
+
+Especificação completa em [`specs/007-comments-timeline/spec.md`](specs/007-comments-timeline/spec.md).
+
+## Impacto no escopo
+
+**Passa a ser obrigatório:** comentários com autor, conteúdo e data/hora;
+recusa de comentário vazio; timeline cronológica única reunindo alterações de
+status e comentários; persistência de comentários.
+
+**Continua fora de escopo**, por decisão: edição e exclusão de comentários,
+formatação rica, menções, notificações, reações, contagem de comentários no
+card do quadro e paginação da timeline. A régua não mudou — o §22 do enunciado
+original continua valendo, e nenhum extra compensa requisito obrigatório fraco.
+
+## Decisões novas
+
+**D1 — A mudança é aditiva no contrato da API, não substitutiva.**
+`GET /incidents/:id` mantém `history` e ganha `comments` e `timeline`. Seria
+mais limpo trocar `history` por `timeline`, mas o §4 do Change Request exige não
+comprometer o que já funcionava, e manter o campo faz **os 13 testes anteriores
+continuarem verdes sem nenhuma edição** — o que é a evidência mais direta de
+não-regressão que eu poderia apresentar.
+
+**D2 — A timeline é derivada em leitura, não persistida.** Não existe tabela de
+eventos: a timeline funde `status_changes` e `comments` no momento da consulta.
+Uma tabela de eventos duplicaria dados já gravados e criaria uma terceira fonte
+capaz de divergir das outras duas. O custo é ordenar em memória, irrelevante
+neste volume.
+
+**D3 — Comentar não move o `updatedAt` do incidente.** Comentário é atividade
+*sobre* o incidente, não alteração *do* incidente. Mudar o campo alteraria um
+significado já estabelecido nas fatias anteriores e exibido no card do quadro.
+Decisão discutível, por isso registrada explicitamente aqui e na spec — para
+não ser lida como esquecimento.
+
+**D4 — Ordenação determinística.** O desempate da timeline é
+`(instante, tipo, id)`. Sem isso, dois eventos no mesmo milissegundo poderiam
+alternar de posição entre requisições, e a spec exige ordem estável (SC-004).
+
+**D5 — Migração por `CREATE TABLE IF NOT EXISTS` no boot.** A tabela `comments`
+nasce automaticamente em bancos já existentes, sem passo manual e sem
+ferramenta de migração. Coerente com o que já era feito para as outras tabelas.
+
+## Novos riscos
+
+| Risco | Impacto | Mitigação |
+|-------|---------|-----------|
+| Quebrar funcionalidade concluída ao mexer no detalhe do incidente | Alto — o §4 do CR é explícito | Mudança aditiva no contrato; suíte anterior rodada sem edição como prova |
+| Timeline com ordem instável entre requisições | Médio — mina a confiança na tela | Desempate determinístico + teste que consulta duas vezes e compara |
+| Comentário virar caminho paralelo para alterar status | Alto — contornaria a regra `Critical` | Teste explícito de que comentar não altera status nem gera histórico |
+| Tempo restante até o code freeze | Alto — sobra menos margem para os documentos finais | CR implementado e testado antes de retomar `FINAL_REPORT.md` |
+
+## Critérios de aceite adicionais
+
+| Requisito | Como determino que está pronto |
+|-----------|-------------------------------|
+| Comentário válido | Persistido com autor e conteúdo normalizados (trim) e data/hora do servidor; `id` e `createdAt` enviados pelo cliente são ignorados |
+| Comentário inválido | Autor ou conteúdo ausente, vazio ou só espaços retorna 400 nomeando o campo, **sem gravar nada** |
+| Incidente inexistente | 404 sem criar registro |
+| Múltiplos comentários | Comentar nunca substitui comentário anterior |
+| Sem efeito colateral | Comentar não altera status, não gera histórico e não move `updatedAt` |
+| Timeline | Eventos dos dois tipos em ordem cronológica crescente, com tipo identificável, e ordem idêntica em consultas repetidas |
+| Persistência | Comentários e ordem da timeline sobrevivem a reinício real do processo |
+| Não-regressão | A suíte anterior permanece verde **sem alteração** |
+
+## Estratégia de testes da mudança
+
+Nenhum teste existente precisou ser reescrito — consequência direta de D1.
+Foram acrescentados:
+
+- **`test/domain/comment-validation.test.ts`** — validação pura de autor e
+  conteúdo: ausente, vazio, só espaços, tipo errado, e normalização por trim.
+- **`test/integration/comments.test.ts`** — sete cenários: recusas sem gravar,
+  404, criação com campos normalizados e timestamp do servidor, múltiplos
+  comentários preservados, ausência de efeito colateral sobre status/histórico/
+  `updatedAt`, fusão cronológica da timeline com verificação de estabilidade
+  entre requisições, e sobrevivência a reinício real do processo.
+
+Resultado: **22 testes, 22 verdes**, sendo os 13 anteriores intocados.

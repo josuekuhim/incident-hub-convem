@@ -14,7 +14,7 @@ que falharia se ele quebrasse.** Tela que parece funcionar não é evidência.
 | ⚠️ | Implementado e verificável manualmente, sem teste automatizado |
 | ❌ | Lacuna conhecida |
 
-Suíte completa: `npm test` — 13 testes, 13 verdes.
+Suíte completa: `npm test` — 22 testes, 22 verdes (inclui o Change Request #1).
 
 ---
 
@@ -162,13 +162,75 @@ histórico.
 
 ---
 
+---
+
+# Change Request #1 — Comentários e Timeline
+
+Spec: [`specs/007-comments-timeline/spec.md`](specs/007-comments-timeline/spec.md).
+Decisões e riscos: seção *Change Request #1* do [`PLAN.md`](PLAN.md).
+
+## CR §1 — Comentários
+
+| Critério | Evidência | |
+|---|---|---|
+| Um incidente pode ter múltiplos comentários | `comments.test.ts` — três comentários preservados na ordem, nenhum substituído | ✅ |
+| Cada comentário tem autor, conteúdo e data/hora | `db/sqlite.ts` (tabela `comments`); `routes/incidents.ts` (`toComment`) | ✅ |
+| A data/hora é definida pelo servidor | `comments.test.ts` — cliente envia `createdAt` de 2000 e `id: 999`, ambos descartados | ✅ |
+| Autor obrigatório — ausente, vazio ou só espaços é recusado | `comment-validation.test.ts`; `comments.test.ts` | ✅ |
+| Conteúdo obrigatório — ausente, vazio ou só espaços é recusado | `comment-validation.test.ts`; `comments.test.ts` | ✅ |
+| A recusa nomeia o campo e **não grava nada** | `comments.test.ts` — após seis tentativas inválidas, `comments` e `timeline` seguem vazias | ✅ |
+| Campos são normalizados (trim) antes de gravar | `comment-validation.test.ts`; `comments.test.ts` | ✅ |
+| Comentar em incidente inexistente retorna 404 sem criar | `comments.test.ts` | ✅ |
+| Comentar não altera status nem gera histórico de status | `comments.test.ts` — status, `updatedAt` e `history` inalterados | ✅ |
+| A interface permite comentar a partir do detalhe e exibe a recusa | `IncidentDetail.vue` — formulário e mensagem de erro | ⚠️ |
+
+Provar que a recusa **não deixa rastro** importa tanto quanto provar que ela
+acontece: uma implementação que valida mas grava mesmo assim passaria em um
+teste que só conferisse o código HTTP.
+
+## CR §2 — Timeline
+
+| Critério | Evidência | |
+|---|---|---|
+| Timeline única reúne alterações de status e comentários | `comments.test.ts` — sequência `comment · status · comment · status` | ✅ |
+| Eventos em ordem cronológica crescente | `comments.test.ts` — timestamps comparados contra a própria lista ordenada | ✅ |
+| O tipo de cada evento é identificável | União discriminada por `type` (`status` \| `comment`), validada pelo `vue-tsc` no template | ✅ |
+| Ordenação determinística para eventos de mesmo instante | Desempate `(instante, tipo, id)`; `comments.test.ts` consulta duas vezes e exige resultado idêntico | ✅ |
+| Timeline vazia é tratada como estado, não erro | `comments.test.ts`; `IncidentDetail.vue` — "sem atividade registrada" | ✅ |
+| A tela apresenta os dois tipos distinguíveis | `IncidentDetail.vue` — "Status alterado: X → Y" e "Autor comentou: …" | ⚠️ |
+
+## CR §3 — Persistência
+
+| Critério | Evidência | |
+|---|---|---|
+| Comentários sobrevivem a reinício do processo | `comments.test.ts` — dois subprocessos reais sobre o mesmo SQLite | ✅ |
+| A ordem da timeline sobrevive intacta ao reinício | `comments.test.ts` — timeline comparada por igualdade profunda antes e depois | ✅ |
+| Bancos existentes ganham a tabela sem passo manual | `CREATE TABLE IF NOT EXISTS comments` no boot | ✅ |
+
+## CR §4 — Compatibilidade
+
+| Critério | Evidência | |
+|---|---|---|
+| Funcionalidades anteriores não foram comprometidas | **Os 13 testes anteriores passam sem nenhuma edição** | ✅ |
+| O contrato existente do detalhe segue disponível | `history` mantido; `comments` e `timeline` são aditivos | ✅ |
+| A regra `Critical` continua íntegra | `status-rules.test.ts` 36/36; verificado também na aplicação em execução | ✅ |
+
+A mudança ser aditiva é o que torna a não-regressão demonstrável: nenhum teste
+anterior precisou ser adaptado para acomodar o Change Request, então o fato de
+continuarem verdes é prova, e não coincidência.
+
+---
+
 ## Resumo
 
 | | Quantidade |
 |---|---|
-| ✅ Coberto por teste | 36 |
-| ⚠️ Verificável apenas manualmente | 7 |
+| ✅ Coberto por teste | 55 |
+| ⚠️ Verificável apenas manualmente | 9 |
 | ❌ Lacuna conhecida | 0 |
+
+Suíte após o Change Request: **22 testes, 22 verdes** — 13 originais intocados
+e 9 novos.
 
 Não há lacunas conhecidas entre os critérios de aceite persistidos. Os itens
 marcados com ⚠️ são requisitos de interface ou de atomicidade verificáveis

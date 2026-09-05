@@ -17,8 +17,24 @@ export interface StatusChange {
   changedAt: string;
 }
 
+export interface Comment {
+  id: number;
+  incidentId: number;
+  author: string;
+  content: string;
+  createdAt: string;
+}
+
+/** Evento da timeline unificada (Change Request #1): status ou comentário. */
+export type TimelineEvent =
+  | { type: 'status'; id: number; at: string; fromStatus: string; toStatus: string }
+  | { type: 'comment'; id: number; at: string; author: string; content: string };
+
 export interface IncidentDetail extends Incident {
+  /** Mantido por compatibilidade com as fatias anteriores. */
   history: StatusChange[];
+  comments: Comment[];
+  timeline: TimelineEvent[];
 }
 
 async function readError(res: Response, fallback: string): Promise<Error> {
@@ -75,6 +91,18 @@ export async function transitionIncident(id: number, status: string) {
     throw await readError(res, 'Erro ao atualizar status');
   }
   return (await res.json()) as Incident;
+}
+
+export async function addComment(incidentId: number, payload: { author: string; content: string }) {
+  const res = await fetch(`/api/incidents/${incidentId}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw await readError(res, 'Erro ao registrar comentário');
+  }
+  return (await res.json()) as Comment;
 }
 
 export async function getDashboard() {

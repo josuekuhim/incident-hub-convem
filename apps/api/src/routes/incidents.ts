@@ -1,7 +1,7 @@
 import { db } from '../db/sqlite.js';
 import { avaliarTransicao } from '../domain/status-rules.js';
 import { errorResponse, HttpError } from '../http/errors.js';
-import { validateCreateBody, validateFilterValue, validateStatusValue } from '../http/validation.js';
+import { validateCommentBody, validateCreateBody, validateFilterValue, validateStatusValue } from '../http/validation.js';
 import type { Severity, Status } from '../domain/constants.js';
 
 interface IncidentRecord {
@@ -37,6 +37,48 @@ function toStatusChange(item: any) {
     toStatus: item.to_status,
     changedAt: new Date(item.changed_at).toISOString(),
   };
+}
+
+function toComment(item: any) {
+  return {
+    id: item.id,
+    incidentId: item.incident_id,
+    author: item.author,
+    content: item.content,
+    createdAt: new Date(item.created_at).toISOString(),
+  };
+}
+
+/**
+ * Timeline unificada (Change Request #1): funde alterações de status e
+ * comentários em uma única sequência cronológica. É derivada em tempo de
+ * leitura — não existe tabela de eventos, para não duplicar dados nem criar
+ * risco de divergência entre as fontes.
+ *
+ * O desempate para eventos de mesmo instante é (instante, tipo, id), de modo
+ * que a ordem é determinística: a mesma entrada produz sempre a mesma saída.
+ */
+function buildTimeline(statusChanges: any[], comments: any[]) {
+  const events = [
+    ...statusChanges.map((item) => ({
+      type: 'status' as const,
+      id: item.id,
+      at: item.changed_at,
+      fromStatus: item.from_status,
+      toStatus: item.to_status,
+    })),
+    ...comments.map((item) => ({
+      type: 'comment' as const,
+      id: item.id,
+      at: item.created_at,
+      author: item.author,
+      content: item.content,
+    })),
+  ];
+
+  events.sort((a, b) => a.at - b.at || a.type.localeCompare(b.type) || a.id - b.id);
+
+  return events.map((event) => ({ ...event, at: new Date(event.at).toISOString() }));
 }
 
 export function registerIncidentRoutes(app: any) {
@@ -152,6 +194,34 @@ export function registerIncidentRoutes(app: any) {
     return reply.send(toIncident(updated));
   });
 
+  app.post('/incidents/:id/comments', async (request: any, reply: any) => {
+    const id = Number(request.params?.id);
+    const incident = db.prepare('SELECT * FROM incidents WHERE id = ?').get(id) as IncidentRecord | undefined;
+    if (!incident) {
+      return reply.code(404).send(errorResponse('Incidente não encontrado'));
+    }
+
+    let data: { author: string; content: string };
+    try {
+      data = validateCommentBody(request.body);
+    } catch (error) {
+      if (error instanceof Error) {
+        return reply.code(400).send(errorResponse(error.message));
+      }
+      return reply.code(500).send(errorResponse('Erro inesperado'));
+    }
+
+    // Comentar é atividade *sobre* o incidente, não alteração *do* incidente:
+    // não move updated_at nem gera registro em status_changes.
+    const result = db.prepare(`
+      INSERT INTO comments (incident_id, author, content, created_at)
+      VALUES (@incidentId, @author, @content, @createdAt)
+    `).run({ incidentId: id, author: data.author, content: data.content, createdAt: Date.now() });
+
+    const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(result.lastInsertRowid);
+    return reply.code(201).send(toComment(comment));
+  });
+
   app.get('/incidents/:id', async (request: any, reply: any) => {
     const id = Number(request.params?.id);
     const incident = db.prepare('SELECT * FROM incidents WHERE id = ?').get(id) as IncidentRecord | undefined;
@@ -160,7 +230,16 @@ export function registerIncidentRoutes(app: any) {
     }
 
     const history = db.prepare('SELECT * FROM status_changes WHERE incident_id = ? ORDER BY changed_at ASC, id ASC').all(id) as any[];
-    return reply.send({ ...toIncident(incident), history: history.map(toStatusChange) });
+    const comments = db.prepare('SELECT * FROM comments WHERE incident_id = ? ORDER BY created_at ASC, id ASC').all(id) as any[];
+
+    // `history` é mantido para não quebrar o contrato das fatias anteriores;
+    // `comments` e `timeline` são aditivos (Change Request #1).
+    return reply.send({
+      ...toIncident(incident),
+      history: history.map(toStatusChange),
+      comments: comments.map(toComment),
+      timeline: buildTimeline(history, comments),
+    });
   });
 
   app.get('/dashboard', async () => {

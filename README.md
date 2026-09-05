@@ -167,6 +167,16 @@ tudo ou nada.
 pela aplicação. Mesmo uma escrita fora do caminho normal não consegue gravar um
 status inválido.
 
+**A timeline é derivada em leitura, não persistida.** Comentários e alterações
+de status vivem em suas próprias tabelas; a timeline unificada é a fusão
+ordenada das duas no momento da consulta. Uma tabela de eventos duplicaria
+dados já gravados e criaria uma terceira fonte capaz de divergir. O desempate é
+`(instante, tipo, id)`, para que a ordem seja determinística.
+
+**Comentar não altera o incidente.** Registrar um comentário não move o
+`updatedAt` nem gera entrada no histórico de status: comentário é atividade
+*sobre* o incidente, não alteração *do* incidente.
+
 **Persistência sem dependência nativa.** SQLite através de `node:sqlite`
 (biblioteca padrão do Node 24), com SQL direto. O scaffold inicial trazia
 `better-sqlite3` + Drizzle; os três foram removidos porque um addon C++ colocaria
@@ -179,8 +189,9 @@ com migrations não se justifica para duas tabelas.
 |--------|------|--------|
 | `GET` | `/incidents` | Lista, com filtros `status` e `severity` combináveis |
 | `POST` | `/incidents` | Cria — sempre em `Open`, timestamps pelo servidor |
-| `GET` | `/incidents/:id` | Detalhe com histórico cronológico |
+| `GET` | `/incidents/:id` | Detalhe com histórico, comentários e timeline |
 | `POST` | `/incidents/:id/status` | Altera status; `422` se a regra recusar |
+| `POST` | `/incidents/:id/comments` | Registra comentário; `400` se autor ou conteúdo vazio |
 | `GET` | `/dashboard` | Contadores do estado atual |
 | `GET` | `/health` | Verificação de saúde |
 

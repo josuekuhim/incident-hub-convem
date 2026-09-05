@@ -43,6 +43,31 @@ export function validateCreateBody(body: unknown): { title: string; description:
   };
 }
 
+export function validateCommentBody(body: unknown): { author: string; content: string } {
+  if (!body || typeof body !== 'object') {
+    throw new Error('Informe o autor do comentário');
+  }
+
+  const data = body as Record<string, unknown>;
+  const errors: string[] = [];
+
+  const author = getRequiredString(data.author);
+  if (author === null) {
+    errors.push('Informe o autor do comentário');
+  }
+
+  const content = getRequiredString(data.content);
+  if (content === null) {
+    errors.push('Informe o conteúdo do comentário');
+  }
+
+  if (errors.length) {
+    throw new Error(errors[0]);
+  }
+
+  return { author: author as string, content: content as string };
+}
+
 export function validateStatusValue(value: unknown): Status {
   if (typeof value !== 'string' || !statuses.includes(value as Status)) {
     throw new Error('O status deve ser Open, In Progress ou Resolved');

@@ -114,10 +114,10 @@ em três níveis, escolhidos pelo que cada um consegue provar:
 - **Integração** — servidor real contra banco SQLite em arquivo temporário:
   criação e validação de entrada, recusa de transição **sem efeitos colaterais**,
   histórico somente-adição, filtros combinados, contadores do dashboard.
-- **Persistência real** — o servidor é iniciado como subprocesso, morto e
-  reiniciado apontando para o mesmo arquivo, verificando que incidentes e
-  histórico permanecem. Reimportar o módulo de banco não provaria isso: o cache
-  de módulo do ESM mascararia o bug.
+Os testes de integração sobem o servidor como **subprocesso real** contra um
+banco em arquivo temporário — não há mock de persistência. A cobertura por
+requisito, incluindo as lacunas conhecidas, está mapeada em
+[ACCEPTANCE.md](ACCEPTANCE.md).
 
 ## Arquitetura
 
@@ -204,6 +204,18 @@ Todas têm default funcional — a aplicação sobe sem configurar nada.
   via `tsx`, que é removido no build de produção junto com o diretório `src/`.
   Ele é redundante — o seed roda no boot da API — e deveria ter sido removido.
   Não afeta o uso da aplicação.
+
+- **A persistência entre reinícios do processo não tem teste automatizado.**
+  Ela funciona — o banco é arquivo em disco — e é verificável manualmente
+  derrubando e subindo a aplicação, mas nenhum teste da suíte exerce esse
+  caminho. Detalhado em [ACCEPTANCE.md](ACCEPTANCE.md).
+
+- **Uma asserção de `seed.test.ts` não prova o que pretende.** Ela consulta uma
+  rota inexistente e conclui do 404 que o seed não gera histórico. O
+  comportamento está correto, a verificação é que não vale.
+
+- **Não há testes automatizados de front-end.** Todos os critérios de interface
+  são verificáveis apenas manualmente.
 
 - **Não há edição nem exclusão de incidentes.** Apenas criação, leitura e
   mudança de status. Foi decisão de escopo: edição livre enfraqueceria a

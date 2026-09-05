@@ -4,7 +4,8 @@
 
 **Created**: 2026-09-05
 
-**Status**: Implemented (UI evoluída para o quadro Kanban na fatia 006 — o filtro de status permanece na API; na interface é substituído pelas colunas)
+**Status**: Implemented (UI evoluída para o quadro Kanban na fatia 006, com
+controles de filtro por status e severity)
 
 **Input**: User description: "Filtros de lista e dashboard resumido. Filtro por status e por severity, combináveis entre si. Ausência de filtro retorna todos os incidentes. Valor de filtro inválido é rejeitado ou ignorado de forma explícita, nunca produzindo resultado silenciosamente errado. Dashboard com três contadores calculados sobre o estado atual dos dados."
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { getDashboard, getIncidents, transitionIncident, type Incident, type StatusChange } from '../api';
 
 const emit = defineEmits<{ (e: 'select', id: number): void }>();
@@ -9,15 +9,17 @@ type Column = (typeof columns)[number];
 
 const incidents = ref<Incident[]>([]);
 const dashboard = ref<{ open: number; criticalUnresolved: number; resolved: number }>({ open: 0, criticalUnresolved: 0, resolved: 0 });
+const statusFilter = ref('');
 const severityFilter = ref('');
 const error = ref('');
 const feedback = ref<Record<number, string>>({});
 const busy = ref<Record<number, boolean>>({});
 const historyCache = ref<Record<number, StatusChange[]>>({});
 
-const visible = computed(() =>
-  severityFilter.value ? incidents.value.filter((i) => i.severity === severityFilter.value) : incidents.value,
-);
+const visible = computed(() => incidents.value.filter((incident) =>
+  (!statusFilter.value || incident.status === statusFilter.value)
+  && (!severityFilter.value || incident.severity === severityFilter.value),
+));
 
 const byColumn = computed(() => {
   const map: Record<Column, Incident[]> = { Open: [], 'In Progress': [], Resolved: [] };
@@ -70,16 +72,18 @@ async function move(incident: Incident, target: string) {
 
 defineExpose({ reload: load });
 
-watch(severityFilter, () => {
-  /* filtro client-side, sem recarregar */
-});
-
 onMounted(() => void load());
 </script>
 
 <template>
   <section>
     <div class="toolbar">
+      <select v-model="statusFilter" aria-label="Filtrar por status">
+        <option value="">Todos os status</option>
+        <option value="Open">Open</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Resolved">Resolved</option>
+      </select>
       <select v-model="severityFilter">
         <option value="">Todas as severidades</option>
         <option value="Low">Low</option>

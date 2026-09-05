@@ -86,8 +86,8 @@ Registro de interações relevantes com IA, no momento em que acontecem
   `status`/`severity` com interseção e rejeição explícita de valores inválidos.
   GET `/dashboard` calcula open, criticalUnresolved e resolved a partir dos
   dados atuais. Testes cobrem filtros, interseção, estados vazios e sequência
-  numérica 1/1/1 → 0/1/1 → 0/0/2. A UI foi evoluída na spec 006: o filtro de
-  status virou colunas do quadro e o filtro de severidade é client-side.
+  numérica 1/1/1 → 0/1/1 → 0/0/2. A UI foi evoluída na spec 006: controles de
+  status e severity são aplicados client-side e em combinação no quadro.
 
 ## Spec 006 — Quadro Kanban Interativo
 
@@ -99,6 +99,9 @@ Registro de interações relevantes com IA, no momento em que acontecem
   contadores, cards com destaque por severidade, botões de transição inline,
   bloqueio durante a requisição, feedback de recusa no próprio card e histórico
   da sessão. `App.vue` atualiza o quadro após criação/detalhe; `api.ts` extrai
-  mensagens de `{ error }`. Validado via Docker: Critical Open → Resolved foi
-  bloqueado; Open → In Progress → Resolved moveu o card e atualizou dashboard
-  sem reload. `npm test`: 7/7 verde; builds da API e web verdes.
+  mensagens de `{ error }`. Adicionado seletor de status, combinado com o de
+  severity, para expor integralmente os filtros da spec 005 na UI. Validado via
+  Docker: Critical Open → Resolved foi bloqueado; Open → In Progress → Resolved
+  moveu o card e atualizou dashboard sem reload. A combinação visual
+  status=Resolved + severity=Critical mostrou apenas os dois cards compatíveis,
+  sem navegação ou reload. `npm test`: 12/12 verde; builds da API e web verdes.

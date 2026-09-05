@@ -195,12 +195,6 @@ Todas têm default funcional — a aplicação sobe sem configurar nada.
 
 ## Limitações conhecidas
 
-- **O filtro por status não tem controle próprio na interface.** O quadro
-  separa os incidentes em colunas `Open` / `In Progress` / `Resolved`, o que
-  cobre a necessidade visualmente, mas não existe um seletor de status como o
-  de severidade. O filtro está implementado e testado na API
-  (`GET /incidents?status=...`), apenas não exposto na UI.
-
 - **O histórico exibido no card do Kanban é apenas da sessão atual.** Ele
   mostra as transições feitas desde que a página foi carregada e se perde ao
   recarregar. O histórico completo e persistido está sempre na tela de detalhe

@@ -147,7 +147,7 @@ description: "Task list para o plano conjunto das fatias 001–006 do Incident H
 - [x] T025 [US5] Estender GET /incidents em apps/api/src/routes/incidents.ts: query params status/severity validados em http/validation.ts (fora do enum → 400 nomeando o filtro — research R8); ambos presentes → interseção (SQL AND)
 - [x] T026 [US5] Adicionar GET /dashboard em apps/api/src/routes/incidents.ts: 3 contadores recalculados do estado atual (`criticalUnresolved` = Critical ∧ status IN (Open, In Progress))
 - [x] T027 [US5] Estender apps/web/src/components/IncidentList.vue com os dois filtros combináveis e criar apps/web/src/components/Dashboard.vue (3 contadores, rótulos em português) integrado em App.vue
-  > Nota: contadores renderizados no topo do quadro; filtros/dashboard migrados para KanbanBoard.vue na fatia 006 (T031). Filtro de status permanece na API; na UI do quadro é substituído pelas colunas.
+  > Nota: contadores renderizados no topo do quadro; filtros/dashboard migrados para KanbanBoard.vue na fatia 006 (T031). Os controles de status e severity são combinados client-side no quadro.
 
 **Checkpoint US5**: Produto completo das 5 fatias. Commit com `npm test` verde.
 

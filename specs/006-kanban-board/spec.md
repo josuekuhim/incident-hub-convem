@@ -175,8 +175,8 @@ aplicar filtro de severidade → cards filtrados instantaneamente.
 ## Out of Scope (desta fatia)
 
 Drag-and-drop de cards (a transição é por botões explícitos), reordenação
-manual dentro da coluna, filtro por status (redundante com as colunas), busca
-textual, paginação, edição/exclusão de incidentes, autenticação e multi-tenant.
+manual dentro da coluna, busca textual, paginação, edição/exclusão de
+incidentes, autenticação e multi-tenant.
 
 ## Assumptions
 
@@ -184,7 +184,7 @@ textual, paginação, edição/exclusão de incidentes, autenticação e multi-t
   status novo é introduzido.
 - A fonte da verdade é sempre a API: a atualização da interface após uma
   transição usa o incidente retornado pelo servidor (não suposição local).
-- O filtro por status da fatia 005 permanece disponível na API; na UI do
-  quadro ele é substituído pela própria estrutura de colunas.
+- Os filtros de status e severity da fatia 005 permanecem disponíveis na API
+  e são expostos como controles combináveis no quadro.
 - O histórico exibido no card é apenas o da sessão corrente; o histórico
   completo e persistido continua na tela de detalhe.

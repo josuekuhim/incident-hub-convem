@@ -36,8 +36,7 @@
   Resolved com mensagem no card; Open → In Progress → Resolved movendo o card
   sem reload; contadores e dashboard atualizando após cada ação.
 - Decisões registradas: transição por botões explícitos (não drag-and-drop);
-  filtro de severidade client-side; filtro de status da fatia 005 substituído
-  na UI pelas colunas (permanece na API); histórico no card limitado à sessão
-  corrente, com o histórico persistido na tela de detalhe.
+  filtros combináveis de status e severity client-side; histórico no card
+  limitado à sessão corrente, com o histórico persistido na tela de detalhe.
 - Escopo negativo explícito: drag-and-drop, reordenação manual, busca textual
   e paginação ficam fora desta fatia.

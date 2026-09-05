@@ -68,7 +68,7 @@ verificáveis apenas manualmente.
 | Critério | Evidência | |
 |---|---|---|
 | `GET /incidents/:id` retorna os sete campos e o histórico | `acceptance.test.ts:79` | ✅ |
-| Id inexistente retorna 404 | `routes/incidents.ts:159` | ⚠️ |
+| Id inexistente retorna 404 no detalhe | `routes/incidents.ts:216` — sem teste automatizado; o 404 análogo em comentários é coberto por `comments.test.ts` | ⚠️ |
 | Tela exibe os sete campos, datas em pt-BR e o histórico | `IncidentDetail.vue` | ⚠️ |
 
 ## §7 — Alteração de status
@@ -98,7 +98,7 @@ que ela acontece. Uma implementação que recusa mas mesmo assim atualiza
 | Registra status anterior, novo status e data/hora | `acceptance.test.ts:84-88` — pares `[Open, In Progress]`, `[In Progress, Resolved]` na ordem | ✅ |
 | Associado ao incidente correspondente | `status_changes.incident_id` com FK; `transition.test.ts:48` | ✅ |
 | Somente-adição: uma transição aceita grava exatamente um registro | `transition.test.ts:48`; `acceptance.test.ts:83` | ✅ |
-| Status e histórico gravados atomicamente | `routes/incidents.ts:141-149` — `BEGIN`/`COMMIT` com rollback | ⚠️ |
+| Status e histórico gravados atomicamente | `routes/incidents.ts:170-178` — `BEGIN`/`COMMIT` com rollback | ⚠️ |
 | Persistido — sobrevive a reinício | `persistence.test.ts` — cria e altera em um processo, reinicia outro no mesmo SQLite e confere status + histórico | ✅ |
 
 ## §9 — Dashboard
@@ -225,8 +225,8 @@ continuarem verdes é prova, e não coincidência.
 
 | | Quantidade |
 |---|---|
-| ✅ Coberto por teste | 55 |
-| ⚠️ Verificável apenas manualmente | 9 |
+| ✅ Coberto por teste | 65 |
+| ⚠️ Verificável apenas manualmente | 8 |
 | ❌ Lacuna conhecida | 0 |
 
 Suíte após o Change Request: **22 testes, 22 verdes** — 13 originais intocados

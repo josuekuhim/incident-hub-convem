@@ -257,6 +257,48 @@ processos e subi limpo. Nenhuma alteração de código.
 
 ---
 
+## 12 — Remoção do `GET /seed` e dos artefatos de build versionados
+
+**Objetivo.** Eliminar uma rota quebrada em produção e tirar do versionamento
+arquivos gerados pelo compilador. Os dois constavam como não entregues no
+relatório final.
+
+**Contexto.** `GET /seed` executava `tsx src/seed.ts`, mas nem `tsx` nem
+`src/` existem na imagem Docker final — a rota quebrava dentro do container.
+Era redundante de qualquer forma: o seed roda no boot da API e continua
+disponível pelo comando `npm run seed`. Em paralelo, os arquivos
+`tsconfig.*.tsbuildinfo` do `apps/web` são artefatos do TypeScript e estavam
+commitados.
+
+**Instrução.** Remover a rota e ajustar o teste que dependia dela; tirar os
+artefatos do versionamento sem apagá-los do disco.
+
+**Resultado.** `GET /seed` saiu de `routes/incidents.ts`. O `seed.test.ts`
+passou a executar o script `src/seed.ts` duas vezes contra o mesmo SQLite,
+provando a idempotência sem depender da rota. O teste ficou melhor do que
+era: agora exercita o módulo de seed de verdade, em vez de um invólucro HTTP
+que só existia para ser testado. Adicionado `*.tsbuildinfo` ao `.gitignore`.
+
+**Validação.** `npm test` 22/22 verde, confirmando que remover a rota não
+quebrou nada.
+
+Na parte dos artefatos apareceu uma pegadinha. O `.gitignore` sozinho não
+resolveu: `git ls-files` mostrou que os arquivos continuavam rastreados,
+porque regra de ignore não vale para arquivo já versionado. Foi preciso
+`git rm --cached` — e, na primeira passada, só um dos dois saiu. O segundo,
+`tsconfig.node.tsbuildinfo`, seguia no índice e só foi pego ao conferir o
+`git ls-files` de novo.
+
+**Decisão.** Verificar o efeito de cada correção em vez de assumir que a
+intenção bastava. Se eu tivesse dado o item por resolvido logo após editar o
+`.gitignore`, o relatório final afirmaria uma correção que não tinha
+acontecido — exatamente o padrão do teste que passava sem verificar nada.
+
+Sobre a rota: seed é responsabilidade do bootstrap e de um comando explícito
+de manutenção, não de um endpoint HTTP exposto em produção.
+
+---
+
 # Situações exigidas pela §18
 
 ## A IA produziu algo incorreto

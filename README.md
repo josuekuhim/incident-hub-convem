@@ -2,9 +2,10 @@
 
 Aplicação web para registrar e acompanhar incidentes operacionais: criação
 validada, quadro por status com transição inline, regra de negócio que impede
-incidentes `Critical` de irem direto de `Open` para `Resolved`, histórico
-persistido de todas as mudanças de status e dashboard com contadores em tempo
-real.
+incidentes `Critical` de irem direto de `Open` para `Resolved`, comentários por
+incidente, timeline cronológica única reunindo comentários e mudanças de status,
+e dashboard com contadores em tempo real. Tudo persistido em SQLite, sem
+dependência de compilação nativa.
 
 ## Pré-requisitos
 
@@ -105,18 +106,25 @@ docker compose down -v
 npm test
 ```
 
-Executa a suíte completa (`node:test` via `tsx`). A cobertura está organizada
-em três níveis, escolhidos pelo que cada um consegue provar:
+Executa a suíte completa (`node:test` via `tsx`), organizada em três níveis,
+escolhidos pelo que cada um consegue provar:
 
 - **Domínio puro** — a matriz completa de transições: 4 severidades × 3 status
   de origem × 3 de destino, 36 combinações, incluindo a restrição `Critical`.
-  Sem banco, sem rede, sem framework.
+  Mais a validação de entrada de incidentes e de comentários. Sem banco, sem
+  rede, sem framework.
 - **Integração** — servidor real contra banco SQLite em arquivo temporário:
   criação e validação de entrada, recusa de transição **sem efeitos colaterais**,
-  histórico somente-adição, filtros combinados, contadores do dashboard.
-Os testes de integração sobem o servidor como **subprocesso real** contra um
-banco em arquivo temporário — não há mock de persistência. A cobertura por
-requisito, incluindo as lacunas conhecidas, está mapeada em
+  histórico somente-adição, filtros combinados, contadores do dashboard,
+  comentários (recusas que não gravam nada, ausência de efeito sobre o
+  incidente) e ordenação determinística da timeline.
+- **Reinício de processo** — o servidor é encerrado e um novo sobe apontando
+  para o mesmo arquivo SQLite, exigindo incidentes, histórico, comentários e a
+  ordem da timeline intactos. Reimportar o módulo de banco no mesmo processo não
+  provaria isso: o cache de módulos do ESM mascararia o defeito.
+
+Os testes de integração sobem o servidor como **subprocesso real** — não há mock
+de persistência. A cobertura por requisito está mapeada em
 [ACCEPTANCE.md](ACCEPTANCE.md).
 
 ## Arquitetura
@@ -144,7 +152,7 @@ apps/web/                        Vue 3 + Vite
     └── components/
         ├── KanbanBoard.vue      Quadro por status, dashboard, transição inline
         ├── IncidentForm.vue     Criação
-        └── IncidentDetail.vue   Detalhe completo + histórico
+        └── IncidentDetail.vue   Detalhe, timeline unificada e comentários
 ```
 
 ### Decisões que moldam a estrutura
@@ -211,11 +219,6 @@ Todas têm default funcional — a aplicação sobe sem configurar nada.
   recarregar. O histórico completo e persistido está sempre na tela de detalhe
   do incidente, que é a fonte de verdade.
 
-- **`GET /seed` não funciona no container.** O endpoint tenta executar o seed
-  via `tsx`, que é removido no build de produção junto com o diretório `src/`.
-  Ele é redundante — o seed roda no boot da API — e deveria ter sido removido.
-  Não afeta o uso da aplicação.
-
 - **Não há testes automatizados de front-end.** Todos os critérios de interface
   são verificáveis apenas manualmente. A cobertura por requisito está mapeada
   em [ACCEPTANCE.md](ACCEPTANCE.md).
@@ -232,6 +235,3 @@ Todas têm default funcional — a aplicação sobe sem configurar nada.
 - **Sem paginação, busca textual ou ordenação configurável.** A lista devolve
   todos os incidentes ordenados por data de criação decrescente. Adequado ao
   volume esperado; não escalaria para milhares de registros.
-
-- **`apps/web/tsconfig.app.tsbuildinfo` está versionado.** É artefato de build
-  e deveria estar no `.gitignore`.

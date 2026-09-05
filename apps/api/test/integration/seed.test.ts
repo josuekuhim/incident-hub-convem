@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { startServer } from '../helpers.js';
 
 let tempDir: string;
@@ -19,10 +20,15 @@ after(async () => {
 });
 
 test('seed is idempotent and writes no status changes', async () => {
-  const first = await fetch(`${server.baseUrl}/seed`);
-  assert.equal(first.status, 200);
-  const second = await fetch(`${server.baseUrl}/seed`);
-  assert.equal(second.status, 200);
+  const executeSeed = () => spawnSync(process.execPath, ['--import', 'tsx', 'src/seed.ts'], {
+    cwd: process.cwd(),
+    env: { ...process.env, SQLITE_PATH: server.sqlitePath },
+    encoding: 'utf8',
+  });
+
+  assert.equal(executeSeed().status, 0);
+  assert.equal(executeSeed().status, 0);
+
   const incidents = await fetch(`${server.baseUrl}/incidents`);
   assert.equal(incidents.status, 200);
   const payload = await incidents.json();

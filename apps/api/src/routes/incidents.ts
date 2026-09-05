@@ -84,19 +84,6 @@ function buildTimeline(statusChanges: any[], comments: any[]) {
 export function registerIncidentRoutes(app: any) {
   app.get('/health', async () => ({ status: 'ok' }));
 
-  app.get('/seed', async (_request: unknown, reply: any) => {
-    const { spawnSync } = await import('node:child_process');
-    const seedResult = spawnSync(process.execPath, ['--import', 'tsx', 'src/seed.ts'], {
-      cwd: process.cwd(),
-      env: process.env,
-      encoding: 'utf8',
-    });
-    if (seedResult.status !== 0) {
-      return reply.code(500).send(errorResponse('Não foi possível executar o seed'));
-    }
-    return reply.send({ ok: true });
-  });
-
   app.get('/incidents', async (request: any, reply: any) => {
     const status = request.query?.status;
     const severity = request.query?.severity;

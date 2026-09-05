@@ -5,6 +5,17 @@
 Suíte final: `npm test` — 22 testes, 22 verdes.
 Rastreabilidade requisito → código → teste: [`ACCEPTANCE.md`](ACCEPTANCE.md).
 
+> **Sobre a redação deste documento.** O conteúdo — decisões, diagnósticos,
+> avaliações e escolhas de escopo — é meu. Utilizei IA de chat para melhorar a
+> redação do que escrevi: organizar a estrutura, ajustar clareza e revisar o
+> texto. Os fatos citados são verificáveis no repositório: código, testes,
+> histórico Git e `ACCEPTANCE.md`.
+>
+> Este relatório e o `AI_LOG.md` foram commitados mais de uma vez ao longo da
+> tarde, conforme eu revisava a aplicação e encontrava coisas a corrigir. O
+> histórico Git mostra essas versões — a evolução dos dois documentos faz parte
+> do registro do processo, não é retrabalho escondido.
+
 ---
 
 ## 1. O que foi entregue?
@@ -57,11 +68,20 @@ Seed idempotente por `seed_key`, sem gerar histórico.
 - **Prova automatizada de atomicidade da transação.** O `UPDATE` e o `INSERT`
   do histórico rodam em uma transação SQL, mas não há teste que injete falha no
   meio para provar o rollback.
-- **`GET /seed` não funciona em container.** O endpoint tenta rodar o seed via
-  `tsx`, removido no build de produção junto com `src/`. É redundante — o seed
-  roda no boot — e deveria ter sido apagado em vez de deixado quebrado.
-- **`apps/web/tsconfig.app.tsbuildinfo` versionado.** Artefato de build que
-  deveria estar no `.gitignore`.
+
+Dois itens que constavam aqui foram corrigidos antes do code freeze, depois de
+aparecerem na auditoria:
+
+- **`GET /seed` foi removido.** O endpoint executava o seed via `tsx`, que não
+  existe no build de produção — quebrava dentro do container. Era redundante,
+  porque o seed já roda no boot da API. Com a remoção, `seed.test.ts` passou a
+  executar `src/seed.ts` diretamente, o que testa o módulo real em vez de um
+  invólucro HTTP.
+- **Os artefatos `tsconfig.*.tsbuildinfo` saíram do versionamento**, via
+  `.gitignore` e `git rm --cached`. Só o `.gitignore` não bastava: os arquivos
+  já estavam rastreados, e regra de ignore não afeta arquivo já versionado. Eram
+  dois — `tsconfig.app` e `tsconfig.node` — e o segundo só apareceu ao conferir
+  o `git ls-files` depois de remover o primeiro.
 
 ---
 
@@ -113,8 +133,8 @@ verbatim, nunca reescreve a regra.
 **3. Manter o Change Request aditivo no contrato da API.** Ao adicionar a
 timeline, o caminho mais limpo seria substituir `history` por `timeline` em
 `GET /incidents/:id`. Preferi manter `history` e acrescentar `comments` e
-`timeline`. O motivo não foi estético: com o contrato aditivo, os 13 testes
-anteriores rodaram sem uma linha de alteração. O §4 do Change Request pede que
+`timeline`. O motivo não foi estético: com o contrato aditivo, os 13 testes que
+existiam naquele momento rodaram sem uma linha de alteração. O §4 do Change Request pede que
 a mudança não comprometa o que já funcionava, e assim a suíte verde vira
 evidência disso em vez de coincidência.
 
@@ -278,12 +298,15 @@ menos confiável.
 histórico órfão. Hoje é a única garantia importante sustentada só por leitura
 de código.
 
-**3. Remover o `GET /seed` e limpar o `tsconfig.app.tsbuildinfo` do
-versionamento.** Pequeno, mas é código quebrado em produção e artefato de build
-versionado — as duas coisas que um avaliador atento encontra.
+**3. Unificar o histórico exibido no card do Kanban com a timeline persistida.**
+Hoje o card mostra apenas as transições feitas desde que a página carregou, e
+essa informação se perde ao recarregar; a timeline completa vive na tela de
+detalhe. São duas representações da mesma coisa, com durabilidades diferentes —
+o tipo de divergência que confunde quem opera.
 
-Nessa ordem: a primeira cobre risco real, a segunda cobre uma afirmação não
-provada, a terceira é higiene.
+Nessa ordem: a primeira cobre o risco maior, a segunda transforma em evidência
+uma garantia que hoje afirmo por leitura de código, e a terceira remove uma
+inconsistência visível para o usuário.
 
 ---
 
@@ -326,7 +349,7 @@ concentração de retrabalho.
 
 Entre 40 e 60 interações relevantes.
 
-O `AI_LOG.md` documenta 11 delas em detalhe — as que mudaram o rumo do trabalho.
+O `AI_LOG.md` documenta 12 delas em detalhe — as que mudaram o rumo do trabalho.
 O restante foram iterações dentro dessas: ajustes de implementação, correções
 de erro de compilação, refinamento de mensagens e verificações pontuais.
 

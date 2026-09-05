@@ -6,4 +6,5 @@ dist/
 data/
 *.sqlite
 *.sqlite3
+*.tsbuildinfo
 .specify/build/

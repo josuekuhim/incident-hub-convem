@@ -1,16 +1,16 @@
 ---
-description: "Task list para o plano conjunto das fatias 001–005 do Incident Hub"
+description: "Task list para o plano conjunto das fatias 001–006 do Incident Hub"
 ---
 
-# Tasks: Incident Hub — Fatias 001–005 (plano conjunto)
+# Tasks: Incident Hub — Fatias 001–006 (plano conjunto)
 
 **Input**: Design documents from `/specs/000-project-plan/` (plan.md, spec.md-índice, research.md, data-model.md, contracts/api.md, quickstart.md)
 
-**Prerequisites**: plan.md ✅ · spec.md ✅ (índice; normas nas specs 001–005) · research.md ✅ · data-model.md ✅ · contracts/ ✅
+**Prerequisites**: plan.md ✅ · spec.md ✅ (índice; normas nas specs 001–006) · research.md ✅ · data-model.md ✅ · contracts/ ✅
 
 **Tests**: OBRIGATÓRIOS (constituição, Princípio V — não opcionais neste projeto). Toda task de implementação vem após a task de teste correspondente quando aplicável, e **nenhum commit acontece com teste vermelho**.
 
-**Organization**: Tasks agrupadas por user story. US1–US5 correspondem às fatias 001–005. **Constituição: uma task por vez, diff pequeno, suíte completa verde antes de cada commit.** Marcadores [P] indicam apenas ausência de conflito de arquivo — a execução permanece sequencial.
+**Organization**: Tasks agrupadas por user story. US1–US5 correspondem às fatias 001–005; US6 (Phase 9) corresponde à fatia 006 (Kanban). **Constituição: uma task por vez, diff pequeno, suíte completa verde antes de cada commit.** Marcadores [P] indicam apenas ausência de conflito de arquivo — a execução permanece sequencial.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -30,8 +30,8 @@ description: "Task list para o plano conjunto das fatias 001–005 do Incident H
 
 **Purpose**: Remover violações de dependência do scaffold e preparar a suíte.
 
-- [ ] T001 Remover dependências proibidas/desnecessárias de apps/api/package.json (`better-sqlite3`, `@types/better-sqlite3`, `drizzle-orm`, `drizzle-kit`, `@fastify/cors`), excluir apps/api/drizzle.config.ts, apps/api/src/db/schema.ts, apps/api/src/db/index.ts e apps/api/drizzle/ (se existir); atualizar package.json raiz (remover `allowScripts` de better-sqlite3)
-- [ ] T002 Adicionar scripts à raiz package.json: `test` (tsx --test em apps/api/test), `seed` (tsx apps/api/src/seed.ts via workspace @incident-hub/api) e `dev` (api+web em paralelo); nenhuma variável de ambiente sem default (PORT=3000, SQLITE_PATH=data/incident-hub.db)
+- [x] T001 Remover dependências proibidas/desnecessárias de apps/api/package.json (`better-sqlite3`, `@types/better-sqlite3`, `drizzle-orm`, `drizzle-kit`, `@fastify/cors`), excluir apps/api/drizzle.config.ts, apps/api/src/db/schema.ts, apps/api/src/db/index.ts e apps/api/drizzle/ (se existir); atualizar package.json raiz (remover `allowScripts` de better-sqlite3)
+- [x] T002 Adicionar scripts à raiz package.json: `test` (tsx --test em apps/api/test), `seed` (tsx apps/api/src/seed.ts via workspace @incident-hub/api) e `dev` (api+web em paralelo); nenhuma variável de ambiente sem default (PORT=3000, SQLITE_PATH=data/incident-hub.db)
 
 ---
 
@@ -39,9 +39,9 @@ description: "Task list para o plano conjunto das fatias 001–005 do Incident H
 
 **Purpose**: Camada de persistência `node:sqlite`, constantes de domínio e infra de teste — pré-requisito de todas as fatias.
 
-- [ ] T003 Criar apps/api/src/domain/constants.ts com os enums canônicos (`Status`: Open, In Progress, Resolved; `Severity`: Low, Medium, High, Critical) e tipos compartilhados (Incident, StatusChange, ISO na borda) conforme data-model.md
-- [ ] T004 Criar apps/api/src/db/sqlite.ts: conexão `node:sqlite` DatabaseSync com SQLITE_PATH default `data/incident-hub.db` (mkdir recursivo), pragma WAL + foreign_keys, DDL `CREATE TABLE IF NOT EXISTS` para `incidents` (id, title, description, severity, owner, status, created_at, updated_at, seed_key UNIQUE NULL, CHECKs de enum) e `status_changes` (id, incident_id REFERENCES, from_status, to_status, changed_at) conforme data-model.md
-- [ ] T005 Criar apps/api/test/helpers.ts: spawn do servidor como subprocesso real (porta efêmera, SQLITE_PATH em arquivo temporário), espera de prontidão via /health e encerramento limpo — base dos testes de reinício (research R10)
+- [x] T003 Criar apps/api/src/domain/constants.ts com os enums canônicos (`Status`: Open, In Progress, Resolved; `Severity`: Low, Medium, High, Critical) e tipos compartilhados (Incident, StatusChange, ISO na borda) conforme data-model.md
+- [x] T004 Criar apps/api/src/db/sqlite.ts: conexão `node:sqlite` DatabaseSync com SQLITE_PATH default `data/incident-hub.db` (mkdir recursivo), pragma WAL + foreign_keys, DDL `CREATE TABLE IF NOT EXISTS` para `incidents` (id, title, description, severity, owner, status, created_at, updated_at, seed_key UNIQUE NULL, CHECKs de enum) e `status_changes` (id, incident_id REFERENCES, from_status, to_status, changed_at) conforme data-model.md
+- [x] T005 Criar apps/api/test/helpers.ts: spawn do servidor como subprocesso real (porta efêmera, SQLITE_PATH em arquivo temporário), espera de prontidão via /health e encerramento limpo — base dos testes de reinício (research R10)
 
 **Checkpoint**: Foundation pronta; stories podem começar (sempre em ordem US1→US5).
 
@@ -57,15 +57,16 @@ description: "Task list para o plano conjunto das fatias 001–005 do Incident H
 
 > **NOTE**: Escrever primeiro; confirmar que FALHAM antes de implementar.
 
-- [ ] T006 [P] [US1] Teste de integração em apps/api/test/integration/list.test.ts: GET /incidents retorna os 3 incidentes do seed com título/severidade/responsável/status corretos; sem seed retorna []
-- [ ] T007 [P] [US1] Teste de integração em apps/api/test/integration/seed.test.ts: rodar o seed duas vezes não duplica (continua 3); seed grava direto com status indicado e 0 registros em status_changes
-- [ ] T008 [P] [US1] Teste de integração em apps/api/test/integration/persistence.test.ts: dados sobrevivem ao reinício do PROCESSO (helper T005: sobe servidor, cria estado, mata, sobe de novo no mesmo SQLITE_PATH, confere)
+- [x] T006 [P] [US1] Teste de integração em apps/api/test/integration/list.test.ts: GET /incidents retorna os 3 incidentes do seed com título/severidade/responsável/status corretos; sem seed retorna []
+- [x] T007 [P] [US1] Teste de integração em apps/api/test/integration/seed.test.ts: rodar o seed duas vezes não duplica (continua 3); seed grava direto com status indicado e 0 registros em status_changes
+- [x] T008 [P] [US1] Teste de integração em apps/api/test/integration/persistence.test.ts: dados sobrevivem ao reinício do PROCESSO (helper T005: sobe servidor, cria estado, mata, sobe de novo no mesmo SQLITE_PATH, confere)
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Criar apps/api/src/seed.ts: 3 incidentes da spec 001 com seed_key UNIQUE e INSERT OR IGNORE (idempotência por seed_key, não por título — research R5); status gravados direto; sem histórico; executável standalone (npm run seed)
-- [ ] T010 [US1] Reescrever apps/api/src/server.ts: bootstrap db → seed (opcional via flag/env com default documentado) → rotas; GET /incidents (createdAt decrescente, ISO 8601 na borda — research R6); sem CORS (research R4); criar apps/api/src/routes/incidents.ts com o GET
-- [ ] T011 [US1] Reescrever apps/web/src/App.vue e criar apps/web/src/components/IncidentList.vue + apps/web/src/api.ts: lista com título, severidade, responsável, status; estado vazio "Nenhum incidente registrado" (não erro); remoção do formulário provisório do scaffold (formulário volta na US2)
+- [x] T009 [US1] Criar apps/api/src/seed.ts: 3 incidentes da spec 001 com seed_key UNIQUE e INSERT OR IGNORE (idempotência por seed_key, não por título — research R5); status gravados direto; sem histórico; executável standalone (npm run seed)
+- [x] T010 [US1] Reescrever apps/api/src/server.ts: bootstrap db → seed (opcional via flag/env com default documentado) → rotas; GET /incidents (createdAt decrescente, ISO 8601 na borda — research R6); sem CORS (research R4); criar apps/api/src/routes/incidents.ts com o GET
+- [x] T011 [US1] Reescrever apps/web/src/App.vue e criar apps/web/src/components/IncidentList.vue + apps/web/src/api.ts: lista com título, severidade, responsável, status; estado vazio "Nenhum incidente registrado" (não erro); remoção do formulário provisório do scaffold (formulário volta na US2)
+  > Nota: IncidentList.vue foi substituído por KanbanBoard.vue na fatia 006 (T031).
 
 **Checkpoint US1**: MVP funcional — validar cenários 001 do quickstart.md. Commit com `npm test` verde.
 
@@ -79,14 +80,14 @@ description: "Task list para o plano conjunto das fatias 001–005 do Incident H
 
 ### Tests for User Story 2
 
-- [ ] T012 [P] [US2] Teste de integração em apps/api/test/integration/create.test.ts: criação válida → 201, nasce Open, createdAt=updatedAt, aparece na lista, 0 registros em status_changes; cada um dos 4 campos ausente E vazio (8 casos) → 400 com mensagem nomeando o campo; severity inválida → 400; body com id/status/createdAt → ignorados (inclusive status Resolved); incidente criado sobrevive ao reinício do processo
+- [x] T012 [P] [US2] Teste de integração em apps/api/test/integration/create.test.ts: criação válida → 201, nasce Open, createdAt=updatedAt, aparece na lista, 0 registros em status_changes; cada um dos 4 campos ausente E vazio (8 casos) → 400 com mensagem nomeando o campo; severity inválida → 400; body com id/status/createdAt → ignorados (inclusive status Resolved); incidente criado sobrevive ao reinício do processo
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Criar apps/api/src/http/validation.ts: validação de criação campo a campo (string, trim > 0), coletando erros; mensagens em português nomeando o campo conforme contracts/api.md
-- [ ] T014 [US2] Criar apps/api/src/http/errors.ts (se ainda não existir na US1): formato único `{ error: string }` + códigos (400/404/422)
-- [ ] T015 [US2] Adicionar POST /incidents em apps/api/src/routes/incidents.ts: usa validation.ts; ignora id/status/createdAt do body; grava com status Open, id e datas do sistema; 201 com o incidente
-- [ ] T016 [US2] Criar apps/web/src/components/IncidentForm.vue e integrar em App.vue: 4 campos obrigatórios; erro da API exibido verbatim; recarrega a lista após sucesso
+- [x] T013 [US2] Criar apps/api/src/http/validation.ts: validação de criação campo a campo (string, trim > 0), coletando erros; mensagens em português nomeando o campo conforme contracts/api.md
+- [x] T014 [US2] Criar apps/api/src/http/errors.ts (se ainda não existir na US1): formato único `{ error: string }` + códigos (400/404/422)
+- [x] T015 [US2] Adicionar POST /incidents em apps/api/src/routes/incidents.ts: usa validation.ts; ignora id/status/createdAt do body; grava com status Open, id e datas do sistema; 201 com o incidente
+- [x] T016 [US2] Criar apps/web/src/components/IncidentForm.vue e integrar em App.vue: 4 campos obrigatórios; erro da API exibido verbatim; recarrega a lista após sucesso
 
 **Checkpoint US2**: Criação ponta a ponta. Commit com `npm test` verde.
 
@@ -100,11 +101,11 @@ description: "Task list para o plano conjunto das fatias 001–005 do Incident H
 
 ### Tests for User Story 3
 
-- [ ] T017 [P] [US3] Teste unitário em apps/api/test/domain/status-rules.test.ts: as 36 combinações (4 severidades × 3 origens × 3 destinos) com resultado explícito conforme matriz da spec 003; casos-âncora com motivos semânticos (mesmo status; Critical deve passar por In Progress); determinismo (mesma entrada → mesma saída)
+- [x] T017 [P] [US3] Teste unitário em apps/api/test/domain/status-rules.test.ts: as 36 combinações (4 severidades × 3 origens × 3 destinos) com resultado explícito conforme matriz da spec 003; casos-âncora com motivos semânticos (mesmo status; Critical deve passar por In Progress); determinismo (mesma entrada → mesma saída)
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Criar apps/api/src/domain/status-rules.ts: ÚNICA função pura `avaliarTransicao(severity, statusAtual, statusDestino)` → `{ permitido: true } | { permitido: false, motivo }`; sem I/O, sem relógio, sem framework, sem leitura de histórico (constituição III; spec 003 FR-001..007)
+- [x] T018 [US3] Criar apps/api/src/domain/status-rules.ts: ÚNICA função pura `avaliarTransicao(severity, statusAtual, statusDestino)` → `{ permitido: true } | { permitido: false, motivo }`; sem I/O, sem relógio, sem framework, sem leitura de histórico (constituição III; spec 003 FR-001..007)
 
 **Checkpoint US3**: Matriz verde. Commit com `npm test` verde.
 
@@ -118,13 +119,13 @@ description: "Task list para o plano conjunto das fatias 001–005 do Incident H
 
 ### Tests for User Story 4
 
-- [ ] T019 [P] [US4] Teste de integração em apps/api/test/integration/transition.test.ts: recusa Critical Open→Resolved (422 com motivo, status/updatedAt/histórico intactos); sequência Critical Open→In Progress→Resolved (2 registros cronológicos); High Open→Resolved (1 registro); mesmo status recusado sem alterar updatedAt; id inexistente → 404 "Incidente não encontrado"; histórico e status sobrevivem ao reinício; nenhuma operação altera/remove registros anteriores (append-only)
+- [x] T019 [P] [US4] Teste de integração em apps/api/test/integration/transition.test.ts: recusa Critical Open→Resolved (422 com motivo, status/updatedAt/histórico intactos); sequência Critical Open→In Progress→Resolved (2 registros cronológicos); High Open→Resolved (1 registro); mesmo status recusado sem alterar updatedAt; id inexistente → 404 "Incidente não encontrado"; histórico e status sobrevivem ao reinício; nenhuma operação altera/remove registros anteriores (append-only)
 
 ### Implementation for User Story 4
 
-- [ ] T020 [US4] Adicionar POST /incidents/:id/status em apps/api/src/routes/incidents.ts: carrega incidente (404 antes da regra), chama exclusivamente `avaliarTransicao` de domain/status-rules.ts (spec 004 FR-001 — proibido reimplementar); recusa → 422 com o motivo da função pura, zero efeitos; aceita → UMA transação SQL: UPDATE status+updated_at e INSERT em status_changes com from/to/changed_at=agora (research R7)
-- [ ] T021 [US4] Adicionar GET /incidents/:id em apps/api/src/routes/incidents.ts: incidente + `history` em ordem cronológica (mais antigo primeiro); id inexistente → 404 específico
-- [ ] T022 [US4] Criar apps/web/src/components/IncidentDetail.vue e integrar: 8 campos + histórico cronológico; ação de transição de status; motivo de recusa exibido verbatim da API (regra nunca reescrita na UI); histórico vazio → "sem mudanças de status registradas"
+- [x] T020 [US4] Adicionar POST /incidents/:id/status em apps/api/src/routes/incidents.ts: carrega incidente (404 antes da regra), chama exclusivamente `avaliarTransicao` de domain/status-rules.ts (spec 004 FR-001 — proibido reimplementar); recusa → 422 com o motivo da função pura, zero efeitos; aceita → UMA transação SQL: UPDATE status+updated_at e INSERT em status_changes com from/to/changed_at=agora (research R7)
+- [x] T021 [US4] Adicionar GET /incidents/:id em apps/api/src/routes/incidents.ts: incidente + `history` em ordem cronológica (mais antigo primeiro); id inexistente → 404 específico
+- [x] T022 [US4] Criar apps/web/src/components/IncidentDetail.vue e integrar: 8 campos + histórico cronológico; ação de transição de status; motivo de recusa exibido verbatim da API (regra nunca reescrita na UI); histórico vazio → "sem mudanças de status registradas"
 
 **Checkpoint US4**: Fluxo completo de transição. Commit com `npm test` verde INCLUINDO a matriz da US3 (spec 004 FR-008).
 
@@ -138,14 +139,15 @@ description: "Task list para o plano conjunto das fatias 001–005 do Incident H
 
 ### Tests for User Story 5
 
-- [ ] T023 [P] [US5] Teste de integração em apps/api/test/integration/filters.test.ts: cada filtro isolado retorna o subconjunto exato (3 status + 4 severidades contra o seed); combinação = interseção (incluindo par vazio → []); valor inválido → 400 nomeando o filtro; ausente/vazio = sem filtro (todos)
-- [ ] T024 [P] [US5] Teste de integração em apps/api/test/integration/dashboard.test.ts: seed → open=1, criticalUnresolved=1, resolved=1; Critical Open→In Progress → open=0, criticalUnresolved=1 (In Progress CONTA); Critical → Resolved → criticalUnresolved=0, resolved=2 (spec 005 FR-007)
+- [x] T023 [P] [US5] Teste de integração em apps/api/test/integration/filters.test.ts: cada filtro isolado retorna o subconjunto exato (3 status + 4 severidades contra o seed); combinação = interseção (incluindo par vazio → []); valor inválido → 400 nomeando o filtro; ausente/vazio = sem filtro (todos)
+- [x] T024 [P] [US5] Teste de integração em apps/api/test/integration/dashboard.test.ts: seed → open=1, criticalUnresolved=1, resolved=1; Critical Open→In Progress → open=0, criticalUnresolved=1 (In Progress CONTA); Critical → Resolved → criticalUnresolved=0, resolved=2 (spec 005 FR-007)
 
 ### Implementation for User Story 5
 
-- [ ] T025 [US5] Estender GET /incidents em apps/api/src/routes/incidents.ts: query params status/severity validados em http/validation.ts (fora do enum → 400 nomeando o filtro — research R8); ambos presentes → interseção (SQL AND)
-- [ ] T026 [US5] Adicionar GET /dashboard em apps/api/src/routes/incidents.ts: 3 contadores recalculados do estado atual (`criticalUnresolved` = Critical ∧ status IN (Open, In Progress))
-- [ ] T027 [US5] Estender apps/web/src/components/IncidentList.vue com os dois filtros combináveis e criar apps/web/src/components/Dashboard.vue (3 contadores, rótulos em português) integrado em App.vue
+- [x] T025 [US5] Estender GET /incidents em apps/api/src/routes/incidents.ts: query params status/severity validados em http/validation.ts (fora do enum → 400 nomeando o filtro — research R8); ambos presentes → interseção (SQL AND)
+- [x] T026 [US5] Adicionar GET /dashboard em apps/api/src/routes/incidents.ts: 3 contadores recalculados do estado atual (`criticalUnresolved` = Critical ∧ status IN (Open, In Progress))
+- [x] T027 [US5] Estender apps/web/src/components/IncidentList.vue com os dois filtros combináveis e criar apps/web/src/components/Dashboard.vue (3 contadores, rótulos em português) integrado em App.vue
+  > Nota: contadores renderizados no topo do quadro; filtros/dashboard migrados para KanbanBoard.vue na fatia 006 (T031). Filtro de status permanece na API; na UI do quadro é substituído pelas colunas.
 
 **Checkpoint US5**: Produto completo das 5 fatias. Commit com `npm test` verde.
 
@@ -155,9 +157,26 @@ description: "Task list para o plano conjunto das fatias 001–005 do Incident H
 
 **Purpose**: Fechamento — README como único caminho de bootstrap e validação final.
 
-- [ ] T028 Escrever README.md na raiz: pré-requisitos (Node 24+), setup de clone limpo (`npm install`, `npm run seed`, `npm run dev`), `npm test`, variáveis de ambiente COM defaults documentados (PORT, SQLITE_PATH), cenários de aceite por fatia (referência ao quickstart.md); nenhum passo manual fora dele (constituição VII)
-- [ ] T029 Remover artefatos do scaffold superados (apps/api/dist/, apps/web/dist/, tsconfig .tsbuildinfo) e conferir docker-compose.yml/Dockerfiles coerentes com o README (sem regredir o caminho primário npm)
-- [ ] T030 Executar a validação ponta a ponta completa de quickstart.md em estado de clone limpo (dados novos) e confirmar `npm test` 100% verde; atualizar AI_LOG.md com a conclusão
+- [x] T028 Escrever README.md na raiz: pré-requisitos (Node 24+), setup de clone limpo (`npm install`, `npm run seed`, `npm run dev`), `npm test`, variáveis de ambiente COM defaults documentados (PORT, SQLITE_PATH), cenários de aceite por fatia (referência ao quickstart.md); nenhum passo manual fora dele (constituição VII)
+- [x] T029 Remover artefatos do scaffold superados (apps/api/dist/, apps/web/dist/, tsconfig .tsbuildinfo) e conferir docker-compose.yml/Dockerfiles coerentes com o README (sem regredir o caminho primário npm); correção Docker: remoção dos arquivos Drizzle mortos (index.ts/schema.ts/drizzle.config.ts) que quebravam o build da API e `@types/node` explícito em apps/web (quebrava o build da web no container)
+- [x] T030 Executar a validação ponta a ponta completa de quickstart.md em estado de clone limpo (dados novos) e confirmar `npm test` 100% verde; atualizar AI_LOG.md com a conclusão
+
+---
+
+## Phase 9: User Story 6 — Quadro Kanban interativo (fatia 006)
+
+**Goal**: Substituir a listagem linear por um quadro Kanban de três colunas com transição de status inline nos cards e atualização de estado sem recarregar a página (spec 006).
+
+**Independent Test**: No navegador, Critical Open → "→ Resolved" bloqueado com mensagem no card (card não se move); Open → In Progress → Resolved move o card sem reload, com histórico da sessão e contadores atualizados; `npm test` permanece 7/7 verde.
+
+### Implementation for User Story 6
+
+- [x] T031 [US6] Criar apps/web/src/components/KanbanBoard.vue: 3 colunas (Open/In Progress/Resolved) com contadores, cards com destaque por severidade (borda colorida), botões de transição inline desabilitados durante a ação, mensagem de recusa no próprio card, histórico da sessão (`HH:mm — De → Para`), dashboard no topo, filtro de severidade client-side; remove apps/web/src/components/IncidentList.vue
+- [x] T032 [US6] Atualizar apps/web/src/App.vue: integrar KanbanBoard; criar incidente e transição no detalhe recarregam o quadro via evento (sem reload de página); abrir detalhe pelo título do card com remontagem fresca do componente
+- [x] T033 [US6] Corrigir apps/web/src/api.ts: erros da API parseados de `{ error }` (mensagem limpa, nunca JSON cru); transitionIncident retorna o incidente atualizado para a atualização local do quadro
+- [x] T034 [US6] Validar no navegador via containers Docker: bloqueio Critical com mensagem; sequência completa movendo o card; contadores e dashboard consistentes; build web/API verdes e `npm test` 7/7
+
+**Checkpoint US6**: Quadro Kanban operando de ponta a ponta em http://localhost:8080. Suíte completa verde.
 
 ---
 

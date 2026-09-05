@@ -3,82 +3,102 @@
 Registro de interações relevantes com IA, no momento em que acontecem
 (Princípio VIII da constituição).
 
-## 2026-09-05 (tarde)
-
-- **$speckit-plan (conjunto)** — Plano conjunto das fatias 001–005 criado em
-  `specs/000-project-plan/` (decisão do usuário; `feature.json` apontado para
-  lá). Artefatos: `plan.md`, `research.md` (10 decisões), `data-model.md`,
-  `contracts/api.md`, `quickstart.md`. Achados relevantes do scaffold
-  existente: enum de status `investigating` divergente das specs; criação
-  aceitando só title com defaults silenciosos; `better-sqlite3` = módulo
-  nativo, **proibido pela constituição** — decisão R1: substituir por
-  `node:sqlite` (padrão do Node 24; verificado funcional no runtime v24.19),
-  remover também drizzle-orm/drizzle-kit/@fastify/cors; testes com `node:test`
-  (zero dependência nova). Constitution Check: GATE PASS com remediação VII
-  incorporada como primeira task da fatia 001. Re-check pós-design: PASS.
-  Sequenciamento definido: 001 (com remediação) → 002 → 003 → 004 → 005, uma
-  fatia por vez, suíte verde a cada commit.
-- **$speckit-tasks (conjunto)** — tasks.md gerado em `specs/000-project-plan/`
-  (30 tasks, T001–T030, em 8 fases). Fases: Setup (remediação VII + scripts),
-  Foundational (node:sqlite, constants, helpers de teste), US1–US5 (= fatias
-  001–005, testes antes de implementação em cada uma) e Polish (README +
-  quickstart ponta a ponta). Observação de processo: setup-tasks.ps1 exigia
-  spec.md no diretório da feature — criada spec-índice em 000-project-plan
-  agregando as user stories normativas das 5 fatias (conteúdo normativo
-  permanece nas specs 001–005).
-
-## 2026-09-05
+## 2026-09-05 — Constituição
 
 - **$speckit-constitution** — Constituição ratificada em
-  `.specify/memory/constitution.md` (v1.0.0, ratificação inicial). Scaffold do
-  template preenchido com os princípios fornecidos pelo usuário. Observação de
-  ambiente: o resolvedor de templates do Spec Kit falhou porque `python3`
-  aponta para o atalho quebrado da Microsoft Store; contornado com shim
-  temporário em `/tmp/pyshim` apontando para o Python 3.14 real
-  (`AppData\Local\Python\bin\python.exe`, com PyYAML). Nenhum arquivo do
-  projeto foi alterado por esse contorno.
-- **$speckit-specify** — Spec "Fundação do Incident Hub" criada em
-  `specs/001-incident-hub-foundation/spec.md`. Fatia: modelo de dados
-  persistido (Incident + StatusChange somente-adição), seed idempotente de 3
-  incidentes, listagem (título, severidade, responsável, status), estado vazio
-  compreensível, dados sobrevivem ao reinício. Checklist de qualidade
-  (`checklists/requirements.md`) 100% na primeira iteração; nenhum
-  [NEEDS CLARIFICATION]. Fora de escopo: criação, filtros, detalhe, transição
-  de status, dashboard. Alinhada à constituição: sem autenticação, escopo
-  fechado, portabilidade via README.
-- **$speckit-specify (002)** — Spec "Criação de Incidente" criada em
-  `specs/002-incident-creation/spec.md`. Fatia: criação com title, description,
-  severity e owner obrigatórios e não vazios; id/status(Open)/createdAt/
-  updatedAt definidos pelo sistema; valores de id, status e createdAt enviados
-  pelo usuário ignorados (inclusive status Resolved); criação não gera
-  StatusChange; rejeição com mensagem que nomeia o campo; sobrevive ao
-  reinício. Checklist 100% na primeira iteração. Fora de escopo: edição e
-  exclusão (permanente), transição, detalhe, filtros, dashboard.
-- **$speckit-specify (003)** — Spec "Regra de Transição de Status (Domínio
-  Puro)" criada em `specs/003-status-transition-rules/spec.md`. Fatia: função
-  pura (severity, statusAtual, statusDestino → permitido | recusado com
-  motivo legível), sem banco/rede/relógio/framework/histórico, em um único
-  arquivo. Matriz explícita de 36 combinações (12 recusas mesmo-status + 1
-  recusa Critical Open→Resolved + 23 permitidas) com casos-âncora; testes
-  unitários cobrindo a matriz inteira. Fora de escopo: aplicar a regra a
-  incidente real, persistir ou exibir na UI. Checklist 100% na primeira
-  iteração.
-- **$speckit-specify (004)** — Spec "Alteração de Status, Histórico Persistido
-  e Tela de Detalhe" criada em `specs/004-status-change-detail/spec.md`. Fatia:
-  transição de status consumindo a função pura da 003 (proibido
-  reimplementar/duplicar); aceita = status + updatedAt + exatamente 1 registro
-  de histórico; recusada = nada alterado, 0 registros, mensagem com motivo;
-  tela de detalhe com os 8 campos e histórico em ordem cronológica; "não
-  encontrado" específico; suíte da 003 deve permanecer verde. Aceite cobre os
-  5 cenários fornecidos + somente-adição + histórico vazio do seed. Fora de
-  escopo: filtros e dashboard. Checklist 100% na primeira iteração.
-- **$speckit-specify (005)** — Spec "Filtros de Lista e Dashboard Resumido"
-  criada em `specs/005-filters-dashboard/spec.md`. Fatia: filtros por status e
-  severity combináveis (interseção), sem filtro = todos, valor inválido
-  rejeitado ou ignorado explicitamente; dashboard com 3 contadores (abertos =
-  Open; Critical não resolvidos = Critical ∧ (Open ∨ In Progress) — incluir
-  In Progress é NON-NEGOTIABLE; resolvidos = Resolved). Aceite numérico
-  conferido contra o seed: 1/1/1 → 0 abertos e 1 critical após
-  Open→In Progress → 0 critical e 2 resolvidos após Resolved. Fora de escopo:
-  ordenação, busca textual, paginação, contagem por severidade. Checklist 100%
-  na primeira iteração.
+  `.specify/memory/constitution.md` (v1.0.0, ratificação inicial). O resolvedor
+  de templates exigiu um shim temporário de `python3` para o Python 3.14 real;
+  nenhum arquivo do projeto foi alterado por esse contorno.
+
+## Spec 000 — Plano do Projeto
+
+- **$speckit-plan** — Criado o plano conjunto em
+  `specs/000-project-plan/`: `plan.md`, `research.md`, `data-model.md`,
+  `contracts/api.md` e `quickstart.md`. Decisão R1: substituir
+  `better-sqlite3`/Drizzle por `node:sqlite`, pois módulos nativos são
+  proibidos pela constituição.
+- **$speckit-tasks** — Geradas T001–T030 em oito fases para as fatias 001–005.
+- **$speckit-implement (infra e polish)** — T001–T005 implementadas:
+  dependências proibidas removidas, scripts raiz criados, enums canônicos,
+  SQLite com WAL/foreign keys e helper de integração. T028–T030 concluídas:
+  README com bootstrap local e Docker, limpeza de artefatos/arquivos Drizzle
+  mortos, Dockerfiles coerentes e validação ponta a ponta. Correção adicional:
+  `@types/node` declarado em `apps/web` para o build isolado no container.
+- **Validação ampliada** — Criados testes unitários em
+  `apps/api/test/domain/validation.test.ts` para criação (texto obrigatório e
+  trim), status canônicos e filtros válidos/vazios/inválidos. Criado teste de
+  aceitação em `apps/api/test/integration/acceptance.test.ts`, cobrindo seed e
+  datas ISO, criação válida/inválida, proteção contra campos controlados pelo
+  cliente, bloqueio Critical Open → Resolved sem efeitos, sequência permitida
+  com histórico cronológico, filtros (interseção e erro explícito) e dashboard.
+  Validação final: `npm test` = 12/12 verde; `npm run build` verde; `docker
+  compose up --build -d` verde; `/health` = ok, frontend = HTTP 200 e proxy
+  `/api/incidents` funcional.
+
+## Spec 001 — Fundação do Incident Hub
+
+- **$speckit-specify** — Criada
+  `specs/001-incident-hub-foundation/spec.md`: persistência, seed idempotente,
+  listagem, estado vazio e sobrevivência a reinício.
+- **$speckit-implement (T006–T011)** — Testes de listagem, seed e persistência
+  implementados. Criados `seed.ts`, bootstrap do servidor, GET `/incidents` e
+  a listagem inicial. O seed grava três incidentes por `seed_key`, sem gerar
+  histórico. A listagem foi posteriormente substituída pelo Kanban da spec
+  006, preservando a API e o estado vazio.
+
+## Spec 002 — Criação de Incidente
+
+- **$speckit-specify** — Criada
+  `specs/002-incident-creation/spec.md`: quatro campos obrigatórios, valores
+  de sistema e erros nomeando o campo inválido.
+- **$speckit-implement (T012–T016)** — Criados `validation.ts`, `errors.ts`,
+  POST `/incidents` e `IncidentForm.vue`. O endpoint ignora id/status/datas
+  enviados pelo cliente, cria sempre em Open e não cria histórico. Os testes
+  cobrem campos ausentes/vazios, enum inválido e persistência.
+
+## Spec 003 — Regra de Transição de Status
+
+- **$speckit-specify** — Criada
+  `specs/003-status-transition-rules/spec.md`: matriz pura de 36 combinações,
+  incluindo a restrição Critical Open → Resolved.
+- **$speckit-implement (T017–T018)** — Criada a função pura
+  `avaliarTransicao` em `domain/status-rules.ts`. A matriz 4×3×3 está coberta
+  por testes: 36/36 combinações verdes, sem I/O, banco, rede ou framework.
+
+## Spec 004 — Alteração de Status, Histórico e Detalhe
+
+- **$speckit-specify** — Criada
+  `specs/004-status-change-detail/spec.md`: transição persistida, histórico
+  somente-adição e detalhe do incidente.
+- **$speckit-implement (T019–T022)** — Implementados POST
+  `/incidents/:id/status` usando exclusivamente `avaliarTransicao` e uma
+  transação SQL (UPDATE + INSERT), e GET `/incidents/:id` com histórico
+  cronológico. Criado `IncidentDetail.vue` com 8 campos, datas em pt-BR,
+  histórico e mensagem da API para recusas. Os testes cobrem 422 sem efeitos,
+  404, append-only e reinício.
+
+## Spec 005 — Filtros e Dashboard
+
+- **$speckit-specify** — Criada
+  `specs/005-filters-dashboard/spec.md`: filtros combináveis e dashboard com
+  Critical não resolvidos incluindo In Progress.
+- **$speckit-implement (T023–T027)** — GET `/incidents` aceita filtros
+  `status`/`severity` com interseção e rejeição explícita de valores inválidos.
+  GET `/dashboard` calcula open, criticalUnresolved e resolved a partir dos
+  dados atuais. Testes cobrem filtros, interseção, estados vazios e sequência
+  numérica 1/1/1 → 0/1/1 → 0/0/2. A UI foi evoluída na spec 006: o filtro de
+  status virou colunas do quadro e o filtro de severidade é client-side.
+
+## Spec 006 — Quadro Kanban Interativo
+
+- **$speckit-specify** — Criada
+  `specs/006-kanban-board/spec.md` e seu checklist: três colunas por status,
+  transição inline e atualização sem recarregar a página.
+- **$speckit-implement (T031–T034)** — Criado `KanbanBoard.vue`, substituindo
+  a listagem linear. O quadro tem colunas Open/In Progress/Resolved com
+  contadores, cards com destaque por severidade, botões de transição inline,
+  bloqueio durante a requisição, feedback de recusa no próprio card e histórico
+  da sessão. `App.vue` atualiza o quadro após criação/detalhe; `api.ts` extrai
+  mensagens de `{ error }`. Validado via Docker: Critical Open → Resolved foi
+  bloqueado; Open → In Progress → Resolved moveu o card e atualizou dashboard
+  sem reload. `npm test`: 7/7 verde; builds da API e web verdes.

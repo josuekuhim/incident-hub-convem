@@ -3,9 +3,18 @@ import { onMounted, ref } from 'vue';
 import { transitionIncident, getIncident, type IncidentDetail } from '../api';
 
 const props = defineProps<{ id: number }>();
+const emit = defineEmits<{ (e: 'changed'): void }>();
 const incident = ref<IncidentDetail | null>(null);
 const error = ref('');
 const statusDraft = ref('');
+
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function formatTime(value: string) {
+  return new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
 
 async function load() {
   error.value = '';
@@ -21,8 +30,9 @@ async function submitTransition() {
   if (!incident.value) return;
   error.value = '';
   try {
-    incident.value = await transitionIncident(incident.value.id, statusDraft.value);
+    await transitionIncident(incident.value.id, statusDraft.value);
     await load();
+    emit('changed');
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Erro ao atualizar status';
   }
@@ -39,8 +49,8 @@ onMounted(() => void load());
       <li><strong>Severidade:</strong> {{ incident.severity }}</li>
       <li><strong>Responsável:</strong> {{ incident.owner }}</li>
       <li><strong>Status:</strong> {{ incident.status }}</li>
-      <li><strong>Criado em:</strong> {{ incident.createdAt }}</li>
-      <li><strong>Atualizado em:</strong> {{ incident.updatedAt }}</li>
+      <li><strong>Criado em:</strong> {{ formatDateTime(incident.createdAt) }}</li>
+      <li><strong>Atualizado em:</strong> {{ formatDateTime(incident.updatedAt) }}</li>
     </ul>
     <div class="transition">
       <select v-model="statusDraft">
@@ -50,10 +60,11 @@ onMounted(() => void load());
       </select>
       <button @click="submitTransition">Alterar status</button>
     </div>
+    <p v-if="error" class="error">{{ error }}</p>
     <h3>Histórico</h3>
     <p v-if="incident.history.length === 0">sem mudanças de status registradas</p>
     <ul v-else>
-      <li v-for="entry in incident.history" :key="entry.id">{{ entry.fromStatus }} → {{ entry.toStatus }} ({{ entry.changedAt }})</li>
+      <li v-for="entry in incident.history" :key="entry.id">{{ formatTime(entry.changedAt) }} — {{ entry.fromStatus }} → {{ entry.toStatus }}</li>
     </ul>
   </section>
   <p v-else-if="error" class="error">{{ error }}</p>

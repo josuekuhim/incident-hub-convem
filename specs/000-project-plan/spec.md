@@ -17,6 +17,7 @@ agrega para geração de tasks e rastreabilidade.
 - [003 — Regra de Transição de Status (Domínio Puro)](../003-status-transition-rules/spec.md)
 - [004 — Alteração de Status, Histórico e Detalhe](../004-status-change-detail/spec.md)
 - [005 — Filtros de Lista e Dashboard](../005-filters-dashboard/spec.md)
+- [006 — Quadro Kanban Interativo](../006-kanban-board/spec.md)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -54,6 +55,13 @@ encontrado" específico; suíte da 003 permanece verde.
 Filtros status+severity combináveis (interseção); sem filtro = todos; valor
 inválido rejeitado explicitamente; dashboard com 3 contadores — Critical não
 resolvidos inclui In Progress (NON-NEGOTIABLE).
+
+### User Story 6 - Quadro Kanban interativo (Priority: P1) — [spec 006]
+
+Listagem substituída por quadro de três colunas (Open/In Progress/Resolved)
+com contadores; transição de status inline em cada card consumindo a API;
+atualização da interface sem recarregar a página; recusa exibe o motivo no
+próprio card; criação e detalhe integrados ao quadro.
 
 ## Requirements *(mandatory)*
 

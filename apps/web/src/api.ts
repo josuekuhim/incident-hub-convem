@@ -21,6 +21,18 @@ export interface IncidentDetail extends Incident {
   history: StatusChange[];
 }
 
+async function readError(res: Response, fallback: string): Promise<Error> {
+  try {
+    const body = await res.json();
+    if (body && typeof body.error === 'string') {
+      return new Error(body.error);
+    }
+  } catch {
+    // resposta sem corpo JSON
+  }
+  return new Error(fallback);
+}
+
 export async function getIncidents(status?: string, severity?: string) {
   const params = new URLSearchParams();
   if (status) params.set('status', status);
@@ -28,7 +40,7 @@ export async function getIncidents(status?: string, severity?: string) {
   const url = `/api/incidents${params.toString() ? `?${params.toString()}` : ''}`;
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(await res.text());
+    throw await readError(res, 'Erro ao carregar incidentes');
   }
   return res.json() as Promise<Incident[]>;
 }
@@ -39,17 +51,16 @@ export async function createIncident(payload: { title: string; description: stri
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  const body = await res.json();
   if (!res.ok) {
-    throw new Error(body.error ?? 'Erro ao criar incidente');
+    throw await readError(res, 'Erro ao criar incidente');
   }
-  return body as Incident;
+  return (await res.json()) as Incident;
 }
 
 export async function getIncident(id: number) {
   const res = await fetch(`/api/incidents/${id}`);
   if (!res.ok) {
-    throw new Error(await res.text());
+    throw await readError(res, 'Incidente não encontrado');
   }
   return res.json() as Promise<IncidentDetail>;
 }
@@ -60,17 +71,16 @@ export async function transitionIncident(id: number, status: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status }),
   });
-  const body = await res.json();
   if (!res.ok) {
-    throw new Error(body.error ?? 'Erro ao atualizar status');
+    throw await readError(res, 'Erro ao atualizar status');
   }
-  return body as IncidentDetail;
+  return (await res.json()) as Incident;
 }
 
 export async function getDashboard() {
   const res = await fetch('/api/dashboard');
   if (!res.ok) {
-    throw new Error(await res.text());
+    throw await readError(res, 'Erro ao carregar dashboard');
   }
   return res.json() as Promise<{ open: number; criticalUnresolved: number; resolved: number }>;
 }

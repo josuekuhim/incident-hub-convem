@@ -1,0 +1,35 @@
+{
+  "version": "1.0.5.dev0",
+  "integration_state_schema": 1,
+  "installed_integrations": [
+    "claude",
+    "zcode",
+    "codex",
+    "copilot",
+    "gemini"
+  ],
+  "integration_settings": {
+    "claude": {
+      "script": "ps",
+      "invoke_separator": "-"
+    },
+    "zcode": {
+      "script": "ps",
+      "invoke_separator": "-"
+    },
+    "codex": {
+      "script": "ps",
+      "invoke_separator": "-"
+    },
+    "copilot": {
+      "script": "ps",
+      "invoke_separator": "-"
+    },
+    "gemini": {
+      "script": "ps",
+      "invoke_separator": "."
+    }
+  },
+  "integration": "claude",
+  "default_integration": "claude"
+}

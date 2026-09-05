@@ -1,0 +1,23 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      SQLITE_PATH: /app/data/incident-hub.db
+    volumes:
+      - sqlite-data:/app/data
+    ports:
+      - '3000:3000'
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    depends_on:
+      - api
+    ports:
+      - '8080:80'
+
+volumes:
+  sqlite-data:

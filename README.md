@@ -205,17 +205,9 @@ Todas têm default funcional — a aplicação sobe sem configurar nada.
   Ele é redundante — o seed roda no boot da API — e deveria ter sido removido.
   Não afeta o uso da aplicação.
 
-- **A persistência entre reinícios do processo não tem teste automatizado.**
-  Ela funciona — o banco é arquivo em disco — e é verificável manualmente
-  derrubando e subindo a aplicação, mas nenhum teste da suíte exerce esse
-  caminho. Detalhado em [ACCEPTANCE.md](ACCEPTANCE.md).
-
-- **Uma asserção de `seed.test.ts` não prova o que pretende.** Ela consulta uma
-  rota inexistente e conclui do 404 que o seed não gera histórico. O
-  comportamento está correto, a verificação é que não vale.
-
 - **Não há testes automatizados de front-end.** Todos os critérios de interface
-  são verificáveis apenas manualmente.
+  são verificáveis apenas manualmente. A cobertura por requisito está mapeada
+  em [ACCEPTANCE.md](ACCEPTANCE.md).
 
 - **Não há edição nem exclusão de incidentes.** Apenas criação, leitura e
   mudança de status. Foi decisão de escopo: edição livre enfraqueceria a

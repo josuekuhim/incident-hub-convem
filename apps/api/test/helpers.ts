@@ -50,11 +50,17 @@ export async function startServer(opts?: { sqlitePath?: string; port?: number })
   }
 
   const baseUrl = `http://127.0.0.1:${portAssigned}`;
+  let stopped = false;
   return {
     process: child,
     baseUrl,
     sqlitePath,
     async stop() {
+      if (stopped || child.exitCode !== null) {
+        stopped = true;
+        return;
+      }
+      stopped = true;
       child.kill('SIGTERM');
       await once(child, 'exit').catch(() => undefined);
     },

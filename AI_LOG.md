@@ -34,6 +34,14 @@ Registro de interações relevantes com IA, no momento em que acontecem
   Validação final: `npm test` = 12/12 verde; `npm run build` verde; `docker
   compose up --build -d` verde; `/health` = ok, frontend = HTTP 200 e proxy
   `/api/incidents` funcional.
+- **Fechamento dos critérios de aceite** — Corrigido `seed.test.ts`: em vez de
+  inferir histórico vazio a partir de uma rota inexistente (404), consulta o
+  detalhe de cada incidente seedado e exige `history: []`. Criado
+  `persistence.test.ts`: cria incidente e histórico, encerra o subprocesso do
+  servidor e inicia outro usando o mesmo SQLite, comprovando dados e histórico
+  persistidos após reinício real. `test/helpers.ts` recebeu `stop()` idempotente
+  para a limpeza segura desse cenário. Resultado: `npm test` = 13/13 verde;
+  `ACCEPTANCE.md` atualizado de 3 lacunas conhecidas para 0.
 
 ## Spec 001 — Fundação do Incident Hub
 

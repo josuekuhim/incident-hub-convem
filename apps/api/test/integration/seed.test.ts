@@ -27,6 +27,9 @@ test('seed is idempotent and writes no status changes', async () => {
   assert.equal(incidents.status, 200);
   const payload = await incidents.json();
   assert.equal(payload.length, 3);
-  const statusChanges = await fetch(`${server.baseUrl}/incidents/1/status-history`);
-  assert.equal(statusChanges.status, 404);
+  for (const incident of payload) {
+    const detail = await fetch(`${server.baseUrl}/incidents/${incident.id}`);
+    assert.equal(detail.status, 200);
+    assert.deepEqual((await detail.json()).history, []);
+  }
 });

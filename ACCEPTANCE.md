@@ -14,7 +14,7 @@ que falharia se ele quebrasse.** Tela que parece funcionar não é evidência.
 | ⚠️ | Implementado e verificável manualmente, sem teste automatizado |
 | ❌ | Lacuna conhecida |
 
-Suíte completa: `npm test` — 12 testes, 12 verdes.
+Suíte completa: `npm test` — 13 testes, 13 verdes.
 
 ---
 
@@ -99,7 +99,7 @@ que ela acontece. Uma implementação que recusa mas mesmo assim atualiza
 | Associado ao incidente correspondente | `status_changes.incident_id` com FK; `transition.test.ts:48` | ✅ |
 | Somente-adição: uma transição aceita grava exatamente um registro | `transition.test.ts:48`; `acceptance.test.ts:83` | ✅ |
 | Status e histórico gravados atomicamente | `routes/incidents.ts:141-149` — `BEGIN`/`COMMIT` com rollback | ⚠️ |
-| Persistido — sobrevive a reinício | — | ❌ |
+| Persistido — sobrevive a reinício | `persistence.test.ts` — cria e altera em um processo, reinicia outro no mesmo SQLite e confere status + histórico | ✅ |
 
 ## §9 — Dashboard
 
@@ -120,23 +120,16 @@ sequência de transições justamente para pegar isso.
 | Critério | Evidência | |
 |---|---|---|
 | Dados sobrevivem ao recarregar a página | Estado vive no SQLite, não no cliente; toda leitura vem da API | ✅ |
-| **Dados sobrevivem ao reiniciar a aplicação** | — | ❌ |
+| **Dados sobrevivem ao reiniciar a aplicação** | `persistence.test.ts` — dois subprocessos reais apontando para o mesmo arquivo SQLite | ✅ |
 | Não depende de compilação nativa | `node:sqlite`, biblioteca padrão do Node 24 | ✅ |
 
-### ❌ Lacuna: reinício de processo não é testado
+### Persistência entre processos comprovada
 
-Os sete testes de integração seguem o mesmo padrão — `startServer` no `before`,
-`stop` no `after`. **Nenhum derruba o servidor e o sobe de novo apontando para o
-mesmo arquivo para conferir que os dados permanecem.**
-
-O `test/helpers.ts` já expõe `stop()` e `sqlitePath` exatamente para isso, mas
-nenhum teste exerce esse caminho. A persistência funciona na prática — o banco
-é arquivo em disco, e o comportamento é verificável manualmente derrubando o
-processo e subindo de novo — mas **não há prova automatizada**, e este é um
-requisito explícito do enunciado.
-
-Reimportar o módulo de banco no mesmo processo não serviria como prova: o cache
-de módulos do ESM mascararia o defeito. Só subprocesso real prova.
+`persistence.test.ts` cria um incidente High, faz a transição Open → Resolved,
+encerra o processo do servidor e inicia um **novo subprocesso** apontando para o
+mesmo arquivo SQLite. O segundo processo precisa encontrar o incidente com
+status Resolved e o histórico `Open → Resolved`. Isso prova a persistência sem
+ser mascarado pelo cache de módulos do ESM.
 
 ## §11 — Dados iniciais
 
@@ -145,24 +138,14 @@ de módulos do ESM mascararia o defeito. Só subprocesso real prova.
 | Os três incidentes especificados existem sem cadastro manual | `list.test.ts`; `acceptance.test.ts:25` — três registros no boot | ✅ |
 | Nascem com o status indicado | `seed.ts` — `Critical/Open`, `High/In Progress`, `Medium/Resolved` | ✅ |
 | Seed é idempotente | `seed.test.ts:21` — executado duas vezes, três registros | ✅ |
-| Seed não gera histórico | — | ❌ |
+| Seed não gera histórico | `seed.test.ts` — detalhe de cada incidente seedado tem `history: []` | ✅ |
 
-### ❌ Lacuna: a asserção de "seed não gera histórico" não prova nada
+### Seed sem histórico comprovado
 
-Em `seed.test.ts:30`:
-
-```ts
-const statusChanges = await fetch(`${server.baseUrl}/incidents/1/status-history`);
-assert.equal(statusChanges.status, 404);
-```
-
-A rota `/incidents/:id/status-history` **não existe na API**. O 404 é de rota
-inexistente, não de ausência de histórico — a asserção passaria mesmo que o
-seed gravasse qualquer quantidade de registros.
-
-A verificação correta usaria `GET /incidents/:id` e afirmaria
-`history.length === 0`, que é o que `acceptance.test.ts:66` faz para incidentes
-criados via API.
+`seed.test.ts` executa o seed duas vezes e, para cada incidente retornado,
+consulta `GET /incidents/:id` e exige `history: []`. A asserção anterior contra
+uma rota inexistente foi removida, pois um 404 não comprovava nada sobre o
+histórico.
 
 ## §12 — Requisitos de qualidade
 
@@ -183,25 +166,24 @@ criados via API.
 
 | | Quantidade |
 |---|---|
-| ✅ Coberto por teste | 33 |
+| ✅ Coberto por teste | 36 |
 | ⚠️ Verificável apenas manualmente | 7 |
-| ❌ Lacuna conhecida | 3 |
+| ❌ Lacuna conhecida | 0 |
 
-As três lacunas estão concentradas em **prova**, não em funcionalidade: a
-persistência entre reinícios funciona e o seed de fato não grava histórico —
-o que falta é evidência automatizada de ambos. Estão documentadas aqui em vez
-de omitidas porque um critério de aceite que se declara satisfeito sem
-evidência é pior do que um critério declaradamente pendente.
+Não há lacunas conhecidas entre os critérios de aceite persistidos. Os itens
+marcados com ⚠️ são requisitos de interface ou de atomicidade verificáveis
+manualmente; exigiriam uma suíte de testes de frontend e injeção controlada de
+falha no banco para também terem prova automatizada.
 
-### Verificação manual das lacunas
+### Verificação manual complementar
 
 ```bash
-# Persistência entre reinícios
+# Persistência entre reinícios (também coberta por persistence.test.ts)
 npm run dev              # cria um incidente pela interface
 # Ctrl+C, depois:
 npm run dev              # o incidente continua lá
 
-# Seed não gera histórico
+# Seed não gera histórico (também coberto por seed.test.ts)
 curl http://localhost:3000/incidents/1 | grep history
 # → "history":[]
 ```
